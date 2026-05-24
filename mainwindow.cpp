@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 
 #include <QString>
+#include <QRegularExpression>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -20,7 +22,15 @@ MainWindow::MainWindow(QWidget *parent)
     //
     // 加载测试程序
     //
-    loadProgram();
+    //loadProgram();
+
+    //汇编框文本
+    ui->asmEdit->setText(
+        "LDI R0,5\n"
+        "LDI R1,3\n"
+        "ADD R0,R1\n"
+        "HALT"
+        );
 
     //
     // 更新界面
@@ -65,33 +75,33 @@ MainWindow::~MainWindow()
 // ==================== 加载程序 ====================
 //
 
-void MainWindow::loadProgram()
-{
-    //
-    // 示例程序：
-    //
-    // R0 = 5
-    // R1 = 3
-    // R0 = R0 + R1
-    // memory[20] = R0
-    // halt
-    //
+// void MainWindow::loadProgram()
+// {
+//     //
+//     // 示例程序：
+//     //
+//     // R0 = 5
+//     // R1 = 3
+//     // R0 = R0 + R1
+//     // memory[20] = R0
+//     // halt
+//     //
 
-    // LDI R0,5
-    cpu.setMem(0, 0x1005);
+//     // LDI R0,5
+//     cpu.setMem(0, 0x1005);
 
-    // LDI R1,3
-    cpu.setMem(1, 0x1203);
+//     // LDI R1,3
+//     cpu.setMem(1, 0x1203);
 
-    // ADD R0,R1
-    cpu.setMem(2, 0x3040);
+//     // ADD R0,R1
+//     cpu.setMem(2, 0x3040);
 
-    // ST R0,20
-    cpu.setMem(3, 0x9014);
+//     // ST R0,20
+//     cpu.setMem(3, 0x9014);
 
-    // HALT
-    cpu.setMem(4, 0xF000);
-}
+//     // HALT
+//     cpu.setMem(4, 0xF000);
+// }
 
 //
 // ==================== 更新界面 ====================
@@ -200,6 +210,8 @@ void MainWindow::updateUI()
     ui->stateText->setText(
         QString::fromStdString(
             cpu.getStateString()));
+
+
 }
 
 //
@@ -266,9 +278,185 @@ void MainWindow::on_resetButton_clicked()
 
     cpu.Reset();
 
-    loadProgram();
+    //loadProgram();
 
     updateUI();
 
     ui->runButton->setText("Run");
 }
+
+ void MainWindow::assembleProgram()
+{
+     QString text = ui->asmEdit->toPlainText();
+     QStringList lines = text.split("\n");
+     int addr = 0;
+
+     for(QString line : lines)
+     {
+         line = line.trimmed();
+         if(line.isEmpty())
+             continue;
+         QStringList parts = line.split(QRegularExpression("[ ,]+"));
+         QString op = parts[0].toUpper();
+         uint16_t code = 0;
+         if(op == "LDI")
+         {
+             int rd =
+                 parts[1]
+                     .remove("R")
+                     .toInt();
+
+             int imm =
+                 parts[2].toInt();
+
+             code =
+                 (0x1 << 12) |
+                 (rd << 9) |
+                 imm;
+         }
+         else if(op == "ADD")
+         {
+             int rd =
+                 parts[1]
+                     .remove("R")
+                     .toInt();
+
+             int rs =
+                 parts[2]
+                     .remove("R")
+                     .toInt();
+
+             code =
+                 (0x3 << 12) |
+                 (rd << 9) |
+                 (rs << 6);
+         }
+         //
+         // SUB
+         //
+         else if(op == "SUB")
+         {
+             int rd =
+                 parts[1]
+                     .remove("R")
+                     .toInt();
+
+             int rs =
+                 parts[2]
+                     .remove("R")
+                     .toInt();
+
+             code =
+                 (0x4 << 12) |
+                 (rd << 9) |
+                 (rs << 6);
+         }
+         //
+         // INC
+         //
+         else if(op == "INC")
+         {
+             int rd =
+                 parts[1]
+                     .remove("R")
+                     .toInt();
+
+             code =
+                 (0x5 << 12) |
+                 (rd << 9);
+         }
+         //
+         // DEC
+         //
+         else if(op == "DEC")
+         {
+             int rd =
+                 parts[1]
+                     .remove("R")
+                     .toInt();
+
+             code =
+                 (0x6 << 12) |
+                 (rd << 9);
+         }
+         //
+         // JMP
+         //
+         else if(op == "JMP")
+         {
+             int addr =
+                 parts[1].toInt();
+
+             code =
+                 (0x7 << 12) |
+                 addr;
+
+         }
+         //
+         // ST
+         //
+         else if(op == "ST")
+         {
+             int rd =
+                 parts[1]
+                     .remove("R")
+                     .toInt();
+
+             int addr =
+                 parts[2].toInt();
+
+             code =
+                 (0x9 << 12) |
+                 (rd << 9) |
+                 addr;
+         }
+         //
+         // LD
+         //
+         else if(op == "LD")
+         {
+             int rd =
+                 parts[1]
+                     .remove("R")
+                     .toInt();
+
+             int addr =
+                 parts[2].toInt();
+
+             code =
+                 (0xA << 12) |
+                 (rd << 9) |
+                 addr;
+         }
+         else if(op == "MOV")
+         {
+             int rd =
+                 parts[1]
+                     .remove("R")
+                     .toInt();
+
+             int rs =
+                 parts[2]
+                     .remove("R")
+                     .toInt();
+
+             code =
+                 (0x2 << 12) |
+                 (rd << 9) |
+                 (rs << 6);
+         }
+         else if(op == "HALT")
+         {
+             code = 0xF000;
+         }
+         cpu.setMem(addr, code);
+
+         addr++;
+     }
+}
+
+void MainWindow::on_assembleButton_clicked()
+{
+    assembleProgram();
+}
+

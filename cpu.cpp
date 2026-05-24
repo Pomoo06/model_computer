@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include <sstream>
 #include <iomanip>
+#include <QDebug>
 
 CPU::CPU() {
     Reset();
@@ -49,6 +50,9 @@ void CPU::Reset() {
 void CPU::setMem(uint16_t addr, uint16_t val) {
     if (addr < MEM_SIZE)
         memory[addr] = val;
+    qDebug() << addr
+             << QString("0x%1")
+                    .arg(val,4,16,QChar('0'));
 }
 
 uint16_t CPU::getMem(uint16_t addr) const {

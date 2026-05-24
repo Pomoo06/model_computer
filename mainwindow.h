@@ -28,6 +28,11 @@ private slots:
 
     void runCPU();
 
+    void on_assembleButton_clicked();
+
+
+
+
 private:
 
     Ui::MainWindow *ui;
@@ -39,6 +44,8 @@ private:
     void updateUI();
 
     void loadProgram();
+
+    void assembleProgram();
 };
 
 #endif
