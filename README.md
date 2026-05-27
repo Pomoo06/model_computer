@@ -4,6 +4,7 @@
 ## Project Introduction
 This is a CPU simulator developed with **C++ and Qt**, simulating a 16‑bit model computer with 5‑stage pipeline.
 Currently implemented instructions: `INC`, `DEC`.
+
 It is a practice project for Computer Composition Principle course.
 
 ## Tech Stack
